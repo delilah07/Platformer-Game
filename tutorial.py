@@ -29,6 +29,8 @@ def get_bg(name):
 
 class Player(pygame.sprite.Sprite): # the base class for visible game objects
     COLOR = (255, 0, 0)
+    GRAVITY = 1
+
     def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
@@ -36,6 +38,7 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
         self.mask = None
         self.direction = 'left'
         self.animation_count = 0
+        self.fall_count = 0
 
     def move(self, dx, dy):
         self.rect.x += dx
@@ -54,7 +57,12 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
             self.animation_count = 0
 
     def loop(self, fps):
+
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+
         self.move(self.x_vel, self.y_vel)
+        
+        self.fall_count += 1
 
     def draw(self, window):
         pygame.draw.rect(window, self.COLOR, self.rect)
