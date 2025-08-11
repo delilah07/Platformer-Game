@@ -67,6 +67,15 @@ def draw(window, bg, bg_img, player):
 
     pygame.display.update() #Update portions of the screen for software displays
 
+def handle_move(player):
+    keys = pygame.key.get_pressed()
+
+    player.x_vel = 0
+    if keys[pygame.K_LEFT]:
+        player.move_left(PLAYER_VEL)
+    if keys[pygame.K_RIGHT]:
+        player.move_right(PLAYER_VEL)
+
 def main(window):
     clock = pygame.time.Clock() #create an object to help track time
     bg, bg_image = get_bg("Blue.png")
@@ -81,6 +90,8 @@ def main(window):
                 run = False
                 break
 
+        player.loop(FPS)
+        handle_move(player)
         draw(window, bg, bg_image, player)
 
     pygame.quit()
