@@ -19,10 +19,10 @@ def flip(sprites):
     return [pygame.transform.flip(sprite, True, False) for sprite in sprites]  # pygame module to transform surfaces - flip vertically and horizontally
 
 def load_sprite_sheets(dir1, dir2, width, height, direction=False):
-    path = join('assets', dir1, dir2)
-    images = [ f for f in listdir(path) if isfile(join(path, f))]
+    path = join("assets", dir1, dir2)
+    images = [f for f in listdir(path) if isfile(join(path, f))]
 
-    all_sprites = {    }
+    all_sprites = {}
 
     for image in images:
         sprite_sheet = pygame.image.load(join(path, image)).convert_alpha()
@@ -59,13 +59,15 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
     COLOR = (255, 0, 0)
     GRAVITY = 1
     SPRITES = load_sprite_sheets("MainCharacters", "MaskDude", 32, 32, True)
+    ANIMATION_DELAY = 3
 
     def __init__(self, x, y, width, height):
+        super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
         self.y_vel = 0
         self.mask = None
-        self.direction = 'left'
+        self.direction = "left"
         self.animation_count = 0
         self.fall_count = 0
 
@@ -75,27 +77,45 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
 
     def move_left(self, vel):
         self.x_vel = -vel
-        if self.direction != 'left':
-            self.direction = 'left'
+        if self.direction != "left":
+            self.direction = "left"
             self.animation_count = 0
 
     def move_right(self, vel):
         self.x_vel = vel
-        if self.direction != 'right':
-            self.direction = 'right'
+        if self.direction != "right":
+            self.direction = "right"
             self.animation_count = 0
 
     def loop(self, fps):
 
-        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+        # self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
 
         self.move(self.x_vel, self.y_vel)
         
         self.fall_count += 1
+        self.update_sprite()
+
+    def update_sprite(self):
+        sprite_sheet = "idle"
+
+        if self.x_vel != 0:
+            sprite_sheet = 'run'
+
+        sprite_sheet_name = f'{sprite_sheet}_{self.direction}'
+        sprites = self.SPRITES[sprite_sheet_name]
+        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
+        self.sprite = sprites[sprite_index]
+        self.animation_count += 1
+        self.update()
+
+    def update(self):
+        self.rect = self.sprite.get_rect(topLeft=(self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.sprite)
 
     def draw(self, window):
         # pygame.draw.rect(window, self.COLOR, self.rect)
-        self.sprite = self.SPRITES["idle_right"][0]
+        # self.sprite = self.SPRITES["idle_" + self.direction][0]
         window.blit(self.sprite, (self.rect.x, self.rect.y))
 
 def draw(window, bg, bg_img, player):
