@@ -95,9 +95,18 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
             self.direction = "right"
             self.animation_count = 0
 
+    def landed(self):
+        self.fall_count = 0
+        self.y_vel = 0
+        self.jump_count = 0
+
+    def hit_head(self):
+        self.count = 0
+        self.y_vel = -1
+
     def loop(self, fps):
 
-        # self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
 
         self.move(self.x_vel, self.y_vel)
         
@@ -159,7 +168,22 @@ def draw(window, bg, bg_img, player, objects):
 
     pygame.display.update() #Update portions of the screen for software displays
 
-def handle_move(player):
+def handle_vertical_collision(player, objects, dy):
+    collided_objects = []
+    for object in objects:
+        if pygame.sprite.collide_mask(player,object):
+            if dy > 0:
+               player.rect.bottom = object.rect.top 
+               player.landed()
+            elif dy < 0:
+               player.rect.top = object.rect.bottom 
+               player.hit_head()
+
+        collided_objects.append(object)
+
+    return collided_objects
+
+def handle_move(player, objects):
     keys = pygame.key.get_pressed()
 
     player.x_vel = 0
@@ -167,6 +191,8 @@ def handle_move(player):
         player.move_left(PLAYER_VEL)
     if keys[pygame.K_RIGHT]:
         player.move_right(PLAYER_VEL)
+
+    handle_vertical_collision(player, objects, player.y_vel)
 
 def main(window):
     clock = pygame.time.Clock() #create an object to help track time
@@ -187,7 +213,7 @@ def main(window):
                 break
 
         player.loop(FPS)
-        handle_move(player)
+        handle_move(player, floor)
         draw(window, bg, bg_image, player, floor)
 
     pygame.quit()
