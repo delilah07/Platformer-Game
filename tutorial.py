@@ -128,8 +128,9 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
         if self.y_vel < 0:
             if self.jump_count == 1:
                 sprite_sheet = 'jump'
-            elif self.jump_count == 1:
+            elif self.jump_count == 2:
                 sprite_sheet = 'double_jump'
+
         elif self.y_vel  > self.GRAVITY * 2:
                 sprite_sheet = 'fall'
 
@@ -147,10 +148,10 @@ class Player(pygame.sprite.Sprite): # the base class for visible game objects
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite) # creates a Mask from the given surface
 
-    def draw(self, window):
+    def draw(self, window, offset_x):
         # pygame.draw.rect(window, self.COLOR, self.rect)
         # self.sprite = self.SPRITES["idle_" + self.direction][0]
-        window.blit(self.sprite, (self.rect.x, self.rect.y))
+        window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y))
 
 class Object(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name=None):
@@ -161,8 +162,6 @@ class Object(pygame.sprite.Sprite):
         self.height = height
         self.name = name
 
-    def draw(self, window):
-        window.blit(self.image, (self.rect.x, self.rect.y))
 
 class Block(Object):
     def __init__(self, x, y, size):
@@ -171,17 +170,17 @@ class Block(Object):
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
-    def draw(self, window):
-        window.blit(self.image, (self.rect.x, self.rect.y))
+    def draw(self, window,  offset_x):
+        window.blit(self.image, (self.rect.x - offset_x, self.rect.y))
 
-def draw(window, bg, bg_img, player, objects):
+def draw(window, bg, bg_img, player, objects, offset_x):
     for tile in bg:
         window.blit(bg_img, tile) #draw one image onto another
 
-    player.draw(window)
+    player.draw(window, offset_x)
 
     for obj in objects:
-        obj.draw(window)
+        obj.draw(window, offset_x)
 
     pygame.display.update() #Update portions of the screen for software displays
 
@@ -220,6 +219,9 @@ def main(window):
     player = Player(100, 100, 50, 50)
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH * 2 // block_size)]
 
+    offset_x = 0
+    scroll_area_width = 200
+
     run = True
     while run:
         clock.tick(FPS) # run 60 frames per second
@@ -235,7 +237,11 @@ def main(window):
 
         player.loop(FPS)
         handle_move(player, floor)
-        draw(window, bg, bg_image, player, floor)
+        draw(window, bg, bg_image, player, floor, offset_x)
+
+        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.x_vel > 0) or (
+            (player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
+            offset_x += player.x_vel
 
     pygame.quit()
     quit()
