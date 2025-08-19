@@ -187,7 +187,7 @@ def draw(window, bg, bg_img, player, objects, offset_x):
 def handle_vertical_collision(player, objects, dy):
     collided_objects = []
     for object in objects:
-        if pygame.sprite.collide_mask(player,object):
+        if pygame.sprite.collide_mask(player, object):
             if dy > 0:
                player.rect.bottom = object.rect.top 
                player.landed()
@@ -199,13 +199,29 @@ def handle_vertical_collision(player, objects, dy):
 
     return collided_objects
 
+def handle_horizontal_collision(player, objects, dx):
+    player.move(dx, 0)
+    player.update()
+    collided_object = None
+    for object in objects:
+        if pygame.sprite.collide_mask(player, object):
+            collided_object = object
+            break
+    
+    player.move(-dx, 0)
+    player.update()
+    return collided_object
+
 def handle_move(player, objects):
     keys = pygame.key.get_pressed()
 
+    collede_left = handle_horizontal_collision(player, objects, -PLAYER_VEL * 2)
+    collede_right = handle_horizontal_collision(player, objects, PLAYER_VEL * 2)
+
     player.x_vel = 0
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] and not collede_left:
         player.move_left(PLAYER_VEL)
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] and not collede_right:
         player.move_right(PLAYER_VEL)
 
     handle_vertical_collision(player, objects, player.y_vel)
@@ -218,6 +234,8 @@ def main(window):
 
     player = Player(100, 100, 50, 50)
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(-WIDTH // block_size, WIDTH * 2 // block_size)]
+
+    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), Block(block_size *3, HEIGHT - block_size * 4, block_size)]
 
     offset_x = 0
     scroll_area_width = 200
@@ -236,8 +254,8 @@ def main(window):
                     player.jump()
 
         player.loop(FPS)
-        handle_move(player, floor)
-        draw(window, bg, bg_image, player, floor, offset_x)
+        handle_move(player, objects)
+        draw(window, bg, bg_image, player, objects, offset_x)
 
         if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.x_vel > 0) or (
             (player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
